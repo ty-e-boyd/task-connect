@@ -9,8 +9,10 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+// DOCSTYLE IS THE RENDERER USED IN THE VIEW
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
+// SETTING ITEM MODEL NEEDED BY LIST
 type item struct {
 	title, desc string
 }
