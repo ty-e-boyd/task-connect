@@ -35,7 +35,7 @@ func main() {
 	}
 
 	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
-	m.list.Title = "Installer"
+	m.list.Title = "Task Connect Installer"
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
