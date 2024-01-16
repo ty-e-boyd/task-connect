@@ -1,45 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
-// DOCSTYLE IS THE RENDERER USED IN THE VIEW
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
-
-// SETTING ITEM MODEL NEEDED BY LIST
-type item struct {
-	title, desc string
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
-
 // APPLICATION STATE MODEL
 type model struct {
-	list list.Model
+	message string
+}
+
+type messageMsg string
+
+func initialModel() tea.Msg {
+	return messageMsg("message?")
 }
 
 // MAIN ENTRY
 func main() {
-	log.Print("Starting Application..")
+	m := model{}
 
-	items := []list.Item{
-		item{title: "Install", desc: "Install Software"},
-		item{title: "Update", desc: "Update Software"},
-		item{title: "Remove", desc: "Remove Software"},
-	}
-
-	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
-	m.list.Title = "Task Connect Installer"
-
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
 		log.Errorf("Unable to run application: %v", err)
@@ -49,30 +33,35 @@ func main() {
 
 // INIT
 func (m model) Init() tea.Cmd {
-	return nil
+	return initialModel
 }
 
 // UPDATE
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	// Is it a custom msg?
+	case messageMsg:
+		m.message = string(msg)
+		return m, tea.Quit
+
 	// Is it a key press?
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return m, tea.Quit
 		}
-
-	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-
-	return m, cmd
+	return m, nil
 }
 
 // VIEW
 func (m model) View() string {
-	return docStyle.Render(m.list.View())
+	s := fmt.Sprintln("hey")
+
+	if len(m.message) > 0 {
+		s += m.message
+	}
+
+	return "\n" + s + "\n\n"
 }
