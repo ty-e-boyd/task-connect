@@ -13,15 +13,9 @@ type model struct {
 	message string
 }
 
-type messageMsg string
-
-func initialModel() tea.Msg {
-	return messageMsg("message?")
-}
-
 // MAIN ENTRY
 func main() {
-	m := model{}
+	m := model{message: "this is a message"}
 
 	p := tea.NewProgram(m)
 
@@ -33,18 +27,12 @@ func main() {
 
 // INIT
 func (m model) Init() tea.Cmd {
-	return initialModel
+	return nil
 }
 
 // UPDATE
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
-	// Is it a custom msg?
-	case messageMsg:
-		m.message = string(msg)
-		return m, tea.Quit
-
 	// Is it a key press?
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" || msg.String() == "q" {
