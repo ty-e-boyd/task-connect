@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
@@ -11,6 +12,28 @@ import (
 // APPLICATION STATE MODEL
 type model struct {
 	message string
+}
+
+// MSG TYPES
+type initialSetupMsg struct {
+	result string
+}
+
+// CMDs
+func doInitialSetup() tea.Msg {
+	app := "brew"
+	arg1 := "install"
+	arg2 := "geoip"
+
+	cmd := exec.Command(app, arg1, arg2)
+	stdout, err := cmd.Output()
+	if err != nil {
+		log.Fatalf("unable to run brew install curl -- %v", err)
+	}
+
+	result := initialSetupMsg{result: string(stdout)}
+
+	return result
 }
 
 // MAIN ENTRY
@@ -27,13 +50,18 @@ func main() {
 
 // INIT
 func (m model) Init() tea.Cmd {
-	return nil
+	return doInitialSetup
 }
 
 // UPDATE
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// Is it a key press?
+	// check for custom msgs
+	case initialSetupMsg:
+		m.message = msg.result
+		return m, tea.Quit
+
+	// check for key press
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return m, tea.Quit
