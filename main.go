@@ -21,17 +21,25 @@ type initialSetupMsg struct {
 
 // CMDs
 func doInitialSetup() tea.Msg {
-	app := "brew"
-	arg1 := "install"
-	arg2 := "geoip"
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("cannot obtain user home directory")
+	}
+
+	app := homedir + "/bin/bash"
+	arg1 := "-c"
+	arg2 := "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 	cmd := exec.Command(app, arg1, arg2)
-	stdout, err := cmd.Output()
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
 	if err != nil {
 		log.Fatalf("unable to run brew install curl -- %v", err)
 	}
 
-	result := initialSetupMsg{result: string(stdout)}
+	result := initialSetupMsg{result: "command ran, no fatal. exiting now.."}
 
 	return result
 }
