@@ -1,47 +1,57 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"os/exec"
+
+	configs "github.com/ty-e-boyd/task-connect/configs"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"golang.org/x/oauth2/google"
+	calendar "google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 // APPLICATION STATE MODEL
 type model struct {
-	message string
+	calService *calendar.Service
 }
 
 // MSG TYPES
 type initialSetupMsg struct {
-	result string
+	result *calendar.Service
 }
 
 // CMDs
 func doInitialSetup() tea.Msg {
-	app := "/bin/bash"
-	arg1 := "-c"
-	arg2 := "\"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-
-	cmd := exec.Command(app, arg1, arg2)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	ctx := context.Background()
+	b, err := os.ReadFile("creds.json")
 	if err != nil {
-		log.Fatalf("unable to run brew install curl -- %v", err.Error())
+		log.Fatal("unable to read client secret")
 	}
 
-	result := initialSetupMsg{result: "command ran, no fatal. exiting now.."}
+	config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
+	if err != nil {
+		log.Fatal("unable to create config from creds")
+	}
+
+	client := configs.GetClient(config)
+
+	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatal("unable to create new calendar service")
+	}
+
+	result := initialSetupMsg{result: srv}
 
 	return result
 }
 
 // MAIN ENTRY
 func main() {
-	m := model{message: "this is a message"}
+	m := model{}
 
 	p := tea.NewProgram(m)
 
@@ -61,7 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// check for custom msgs
 	case initialSetupMsg:
-		m.message = msg.result
+		m.calService = msg.result
 		return m, tea.Quit
 
 	// check for key press
@@ -78,9 +88,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	s := fmt.Sprintln("hey")
 
-	if len(m.message) > 0 {
-		s += m.message
-	}
+	s += "did not fail, which is sorta like a success."
 
 	return "\n" + s + "\n\n"
 }
